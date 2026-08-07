@@ -1,84 +1,16 @@
-# sdlc-integrity-mcp
+# @asobacloud/sdlc-integrity-mcp
 
-MCP server for enterprise SDLC code integrity. It exposes audit and safety-check tools over the [Model Context Protocol](https://modelcontextprotocol.io/) so AI coding agents can scan a workspace for lifecycle teardown gaps, mock-theater tests, DRY violations, and language-specific safety issues in shell, JavaScript/HTML, and Python.
+MCP server for enterprise SDLC code integrity. AI coding agents call its tools over the [Model Context Protocol](https://modelcontextprotocol.io/) to scan a workspace for lifecycle teardown gaps, mock-theater tests, DRY violations, and language-specific safety issues in shell, JavaScript/HTML, and Python.
 
-## Tools
+[![npm](https://img.shields.io/npm/v/@asobacloud/sdlc-integrity-mcp.svg)](https://www.npmjs.com/package/@asobacloud/sdlc-integrity-mcp)
+[![CI](https://github.com/AsobaCloud/sdlc-integrity-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/AsobaCloud/sdlc-integrity-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-| Tool | Runtime | What it checks |
-|------|---------|----------------|
-| `AuditCodeIntegrity` | `python3` | Lifecycle teardown parity, mock-theater test detection, naming invariants, swallowed exceptions, DRY / duplicative functions. Returns structured JSON. |
-| `ShellSafetyChecker` | `bash` | Missing `set -euo pipefail`, shebang issues, hardcoded credentials, background-job silent-failure risk; optionally [shellcheck](https://www.shellcheck.net/) errors. |
-| `JsSafetyChecker` | `node` | JS/HTML syntax errors, duplicate function definitions, duplicate HTML element IDs (AST-based via esprima). |
-| `PythonSafetyChecker` | `python3` | [bandit](https://bandit.readthedocs.io/) (High/Critical), [ruff](https://docs.astral.sh/ruff/), AST checks for `eval`/`exec`, pickle loads, hardcoded credentials, mutable default args. |
+## Quick start
 
-Each tool accepts:
+### Cursor
 
-- `target` — file or directory to scan (relative paths resolve against the workspace root)
-- `timeout` — optional timeout in ms (default `120000`, max `600000`)
-
-Exit code `1` with findings is surfaced as `isError: true` on the MCP tool result; unexpected crashes are reported as errors.
-
-## Requirements
-
-- **Node.js** ≥ 22
-- **Python 3** (for `AuditCodeIntegrity` and `PythonSafetyChecker`)
-- **bash** (for `ShellSafetyChecker`)
-
-### Optional / tool-specific
-
-| Dependency | Used by | Notes |
-|------------|---------|--------|
-| `shellcheck` | `ShellSafetyChecker` | Strongly recommended; without it, custom heuristic checks still run |
-| `bandit` | `PythonSafetyChecker` | Optional; skipped with a warning if missing (`pip install bandit`) |
-| `ruff` | `PythonSafetyChecker` | Optional; skipped with a warning if missing |
-
-`esprima` is a declared npm dependency and is used by `JsSafetyChecker`.
-
-## Install
-
-```bash
-npm install
-npm run build
-```
-
-Or run the published package:
-
-```bash
-npx -y @asobacloud/sdlc-integrity-mcp
-```
-
-## CI & publishing
-
-- **CI** (`.github/workflows/ci.yml`) — on push/PR to `master`/`main`: `npm ci`, build, E2E tests.
-- **Publish** (`.github/workflows/publish.yml`) — on a published GitHub Release (or manual `workflow_dispatch`).
-
-### First npm publish (bootstrap)
-
-Scoped package `@asobacloud/sdlc-integrity-mcp` needs publish rights on the `asobacloud` npm org.
-
-1. Create an npm automation/granular token with publish access to `@asobacloud/*`.
-2. Add it as a repo (or org) Actions secret named `NPM_TOKEN`.
-3. Create and publish a GitHub Release tagged `v1.0.0` (tag must match `package.json` version, or bump the version first).
-
-```bash
-gh release create v1.0.0 --title "v1.0.0" --notes "Initial npm release"
-```
-
-### Ongoing publishes (OIDC, preferred)
-
-After the package exists on npm:
-
-1. On https://www.npmjs.com/package/@asobacloud/sdlc-integrity-mcp → **Settings → Trusted Publisher**:
-   - Organization: `AsobaCloud`
-   - Repository: `sdlc-integrity-mcp`
-   - Workflow filename: `publish.yml`
-2. You can remove `NPM_TOKEN`; subsequent releases publish via OIDC + provenance.
-
-## Cursor / MCP client config
-
-Point your MCP client at the server over stdio. Set `SDLC_WORKSPACE` to the repo the agent should audit (defaults to the process cwd).
-
-**Cursor** (`~/.cursor/mcp.json` or project `.cursor/mcp.json`):
+Add to `~/.cursor/mcp.json` or the project `.cursor/mcp.json`:
 
 ```json
 {
@@ -94,27 +26,53 @@ Point your MCP client at the server over stdio. Set `SDLC_WORKSPACE` to the repo
 }
 ```
 
-For a local checkout instead of npx:
+`SDLC_WORKSPACE` is the repo the agent should audit. If omitted, the server uses its process working directory.
 
-```json
-{
-  "mcpServers": {
-    "sdlc-integrity": {
-      "command": "node",
-      "args": ["/absolute/path/to/sdlc-integrity-mcp/dist/index.js"],
-      "env": {
-        "SDLC_WORKSPACE": "/absolute/path/to/your/repo"
-      }
-    }
-  }
-}
+Restart Cursor (or reload MCP servers), then ask the agent to run the integrity tools against the workspace.
+
+### Run directly
+
+```bash
+npx -y @asobacloud/sdlc-integrity-mcp
 ```
 
-## Custom rules (workspace overlay)
+The server speaks MCP over **stdio** (no HTTP port).
 
-Drop JSON tool configs into `<workspace>/.sdlc-rules/`. Local rules **override** bundled tools with the same `name`, or add new ones. Script paths in local rules are resolved relative to `.sdlc-rules/`.
+## Tools
 
-Example `.sdlc-rules/MyCustomAudit.json`:
+| Tool | Runtime | What it checks |
+|------|---------|----------------|
+| `AuditCodeIntegrity` | `python3` | Lifecycle teardown parity, mock-theater test detection, naming invariants, swallowed exceptions, DRY / duplicative functions. Returns structured JSON. |
+| `ShellSafetyChecker` | `bash` | Missing `set -euo pipefail`, shebang issues, hardcoded credentials, background-job silent-failure risk; optionally [shellcheck](https://www.shellcheck.net/) errors. |
+| `JsSafetyChecker` | `node` | JS/HTML syntax errors, duplicate function definitions, duplicate HTML element IDs (AST-based via [esprima](https://www.npmjs.com/package/esprima)). |
+| `PythonSafetyChecker` | `python3` | [bandit](https://bandit.readthedocs.io/) (High/Critical), [ruff](https://docs.astral.sh/ruff/), AST checks for `eval`/`exec`, pickle loads, hardcoded credentials, mutable default args. |
+
+Each tool accepts:
+
+- `target` — file or directory to scan (relative paths resolve against `SDLC_WORKSPACE`)
+- `timeout` — optional timeout in ms (default `120000`, max `600000`)
+
+Checker exit code `1` (findings) becomes `isError: true` on the MCP result. Unexpected crashes are reported as errors.
+
+## Requirements
+
+| Runtime | Required for |
+|---------|----------------|
+| Node.js ≥ 22 | MCP server + `JsSafetyChecker` |
+| Python 3 | `AuditCodeIntegrity`, `PythonSafetyChecker` |
+| bash | `ShellSafetyChecker` |
+
+Optional (skipped with a warning if missing):
+
+| Tool | Improves |
+|------|----------|
+| [shellcheck](https://www.shellcheck.net/) | `ShellSafetyChecker` |
+| [bandit](https://bandit.readthedocs.io/) | `PythonSafetyChecker` |
+| [ruff](https://docs.astral.sh/ruff/) | `PythonSafetyChecker` |
+
+## Custom rules
+
+Drop JSON tool configs into `<workspace>/.sdlc-rules/`. Local rules **override** bundled tools with the same `name`, or add new ones. Script paths resolve relative to `.sdlc-rules/`.
 
 ```json
 {
@@ -137,35 +95,60 @@ Example `.sdlc-rules/MyCustomAudit.json`:
 }
 ```
 
-`{{placeholder}}` args are interpolated from the tool call arguments. If a flag’s value is omitted, that flag and its placeholder are skipped.
+`{{placeholder}}` values are filled from the tool call. If a value is omitted, that flag and its placeholder are skipped.
 
 ## Architecture
 
 ```
-rules/*.json          → declarative tool schemas + execution specs
-scripts/*             → language-specific checker subprocesses
-src/loader.ts         → load bundled rules, overlay .sdlc-rules/
-src/runner.ts         → spawn runtime, timeouts, exit-code → isError
-src/index.ts          → MCP stdio server (tools/list, tools/call)
-bin/cli.js            → thin launcher for npx / bin
+rules/*.json   → tool schemas + execution specs
+scripts/*      → checker subprocesses
+src/loader.ts  → bundled rules + .sdlc-rules/ overlay
+src/runner.ts  → spawn, timeouts, exit-code → isError
+src/index.ts   → MCP stdio server
+bin/cli.js     → npx / bin entrypoint
 ```
-
-1. On start, the server loads `rules/*.json`, then overlays `<workspace>/.sdlc-rules/`.
-2. `tools/list` returns each tool’s name, description, and `inputSchema`.
-3. `tools/call` resolves `target` against `SDLC_WORKSPACE` (or cwd), interpolates args, and runs `runtime script ...` with a capped timeout (stdout/stderr capped at 1MB).
 
 ## Development
 
 ```bash
+git clone https://github.com/AsobaCloud/sdlc-integrity-mcp.git
+cd sdlc-integrity-mcp
 npm install
 npm run build
 npm test
-npm start          # run MCP server on stdio
-npm run dev        # rebuild-watch via node --watch on dist/
 ```
 
-Integration tests in `tests/mcp-server.test.mjs` drive the **real MCP Client** (`StdioClientTransport`) against the built server and assert concrete findings from fixture files for every bundled tool (pass and fail paths), relative `target` resolution, and unknown-tool error handling.
+| Script | Purpose |
+|--------|---------|
+| `npm run build` | Compile TypeScript → `dist/` |
+| `npm test` | E2E via real MCP `Client` + fixture assertions for all tools |
+| `npm start` | Run the server on stdio |
+| `npm run dev` | `node --watch` on `dist/` |
+
+Local MCP config (instead of npx):
+
+```json
+{
+  "mcpServers": {
+    "sdlc-integrity": {
+      "command": "node",
+      "args": ["/absolute/path/to/sdlc-integrity-mcp/dist/index.js"],
+      "env": {
+        "SDLC_WORKSPACE": "/absolute/path/to/your/repo"
+      }
+    }
+  }
+}
+```
+
+## Releasing
+
+CI runs build + E2E on every push/PR. To publish a new version:
+
+1. Bump `version` in `package.json`
+2. Commit, push, and create a GitHub Release (`gh release create vX.Y.Z --generate-notes`)
+3. `.github/workflows/publish.yml` publishes to npm (Trusted Publisher / OIDC, or `NPM_TOKEN` if configured)
 
 ## License
 
-MIT © AsobaCloud
+MIT © [AsobaCloud](https://github.com/AsobaCloud)
