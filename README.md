@@ -29,8 +29,8 @@ Exit code `1` with findings is surfaced as `isError: true` on the MCP tool resul
 | Dependency | Used by | Notes |
 |------------|---------|--------|
 | `shellcheck` | `ShellSafetyChecker` | Strongly recommended; without it, custom heuristic checks still run |
-| `bandit` | `PythonSafetyChecker` | `pip install bandit` |
-| `ruff` | `PythonSafetyChecker` | `pip install ruff` or install via package manager |
+| `bandit` | `PythonSafetyChecker` | Optional; skipped with a warning if missing (`pip install bandit`) |
+| `ruff` | `PythonSafetyChecker` | Optional; skipped with a warning if missing |
 
 `esprima` is a declared npm dependency and is used by `JsSafetyChecker`.
 
@@ -41,13 +41,38 @@ npm install
 npm run build
 ```
 
-Or run via the published package / local bin:
+Or run the published package:
 
 ```bash
-npx sdlc-integrity-mcp
-# or after install:
-sdlc-integrity-mcp
+npx -y @asobacloud/sdlc-integrity-mcp
 ```
+
+## CI & publishing
+
+- **CI** (`.github/workflows/ci.yml`) — on push/PR to `master`/`main`: `npm ci`, build, E2E tests.
+- **Publish** (`.github/workflows/publish.yml`) — on a published GitHub Release (or manual `workflow_dispatch`).
+
+### First npm publish (bootstrap)
+
+Scoped package `@asobacloud/sdlc-integrity-mcp` needs publish rights on the `asobacloud` npm org.
+
+1. Create an npm automation/granular token with publish access to `@asobacloud/*`.
+2. Add it as a repo (or org) Actions secret named `NPM_TOKEN`.
+3. Create and publish a GitHub Release tagged `v1.0.0` (tag must match `package.json` version, or bump the version first).
+
+```bash
+gh release create v1.0.0 --title "v1.0.0" --notes "Initial npm release"
+```
+
+### Ongoing publishes (OIDC, preferred)
+
+After the package exists on npm:
+
+1. On https://www.npmjs.com/package/@asobacloud/sdlc-integrity-mcp → **Settings → Trusted Publisher**:
+   - Organization: `AsobaCloud`
+   - Repository: `sdlc-integrity-mcp`
+   - Workflow filename: `publish.yml`
+2. You can remove `NPM_TOKEN`; subsequent releases publish via OIDC + provenance.
 
 ## Cursor / MCP client config
 
@@ -139,11 +164,7 @@ npm start          # run MCP server on stdio
 npm run dev        # rebuild-watch via node --watch on dist/
 ```
 
-Integration tests in `tests/mcp-server.test.mjs` cover:
-
-- `tools/list` returns all four bundled tools
-- `AuditCodeIntegrity` and `ShellSafetyChecker` execute against a temp workspace
-- Unknown tools return a structured error instead of crashing
+Integration tests in `tests/mcp-server.test.mjs` drive the **real MCP Client** (`StdioClientTransport`) against the built server and assert concrete findings from fixture files for every bundled tool (pass and fail paths), relative `target` resolution, and unknown-tool error handling.
 
 ## License
 
