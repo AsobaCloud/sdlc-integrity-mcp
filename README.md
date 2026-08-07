@@ -198,4 +198,4 @@ CI runs build + E2E on every push/PR. To publish a new version:
 
 ## License
 
-MIT © [AsobaCloud](https://github.com/AsobaCloud)
+MIT © [Asoba](https://asoba.co)
