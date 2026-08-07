@@ -8,6 +8,8 @@ MCP server for enterprise SDLC code integrity. AI coding agents call its tools o
 
 ## Quick start
 
+Set `SDLC_WORKSPACE` to the absolute path of the repo to audit. If omitted, the server uses its process working directory. The server speaks MCP over **stdio** (no HTTP port).
+
 ### Cursor
 
 Add to `~/.cursor/mcp.json` or the project `.cursor/mcp.json`:
@@ -26,17 +28,62 @@ Add to `~/.cursor/mcp.json` or the project `.cursor/mcp.json`:
 }
 ```
 
-`SDLC_WORKSPACE` is the repo the agent should audit. If omitted, the server uses its process working directory.
+Restart Cursor (or reload MCP servers), then ask the agent to run the integrity tools.
 
-Restart Cursor (or reload MCP servers), then ask the agent to run the integrity tools against the workspace.
+### Claude Code
+
+CLI (user scope):
+
+```bash
+claude mcp add --transport stdio --scope user \
+  --env SDLC_WORKSPACE=/absolute/path/to/your/repo \
+  sdlc-integrity -- npx -y @asobacloud/sdlc-integrity-mcp
+```
+
+Or put the same JSON under `mcpServers` in project `.mcp.json` (team-shared) or `~/.claude.json` (user-wide):
+
+```json
+{
+  "mcpServers": {
+    "sdlc-integrity": {
+      "command": "npx",
+      "args": ["-y", "@asobacloud/sdlc-integrity-mcp"],
+      "env": {
+        "SDLC_WORKSPACE": "/absolute/path/to/your/repo"
+      }
+    }
+  }
+}
+```
+
+Verify with `claude mcp list`. Project `.mcp.json` servers need approval the first time you open the repo in Claude Code.
+
+### Codex
+
+CLI:
+
+```bash
+codex mcp add sdlc-integrity --env SDLC_WORKSPACE=/absolute/path/to/your/repo -- npx -y @asobacloud/sdlc-integrity-mcp
+```
+
+Or edit `~/.codex/config.toml` (or project `.codex/config.toml` in a trusted project):
+
+```toml
+[mcp_servers.sdlc-integrity]
+command = "npx"
+args = ["-y", "@asobacloud/sdlc-integrity-mcp"]
+
+[mcp_servers.sdlc-integrity.env]
+SDLC_WORKSPACE = "/absolute/path/to/your/repo"
+```
+
+Codex CLI, the IDE extension, and the ChatGPT desktop Codex host share this config.
 
 ### Run directly
 
 ```bash
 npx -y @asobacloud/sdlc-integrity-mcp
 ```
-
-The server speaks MCP over **stdio** (no HTTP port).
 
 ## Tools
 
