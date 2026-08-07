@@ -1,0 +1,29 @@
+{
+  "name": "ShellSafetyChecker",
+  "description": "Run the shell safety checker (missing set -euo pipefail, background job silent failure risk, hardcoded credentials) against shell scripts. Returns findings.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "target": { "type": "string", "description": "Target directory or file to scan (default: cwd)" },
+      "timeout": { "type": "integer", "description": "Timeout in ms (max 600000)" }
+    }
+  },
+  "phases": {
+    "explore_only": true,
+    "planning_blocked": false,
+    "mandatory_in": ["test"]
+  },
+  "prompt": {
+    "mandatory_instruction": "Run ShellSafetyChecker on shell scripts in the workspace to validate strict mode, silent failure risks, and security issues.",
+    "available_hint": "Validates shell scripts for safety (strict mode, credentials, background job risks)"
+  },
+  "execution": {
+    "runtime": "bash",
+    "script": "scripts/shell-safety-checker.sh",
+    "args": [
+      "{{target}}"
+    ],
+    "default_timeout": 120000,
+    "max_timeout": 600000
+  }
+}

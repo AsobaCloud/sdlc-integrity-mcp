@@ -1,0 +1,52 @@
+{
+  "name": "@asobacloud/sdlc-integrity-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for enterprise SDLC code integrity: lifecycle teardown parity, mock theater detection, DRY violations, and safety checks for shell, JS, and Python.",
+  "keywords": [
+    "mcp",
+    "sdlc",
+    "code-integrity",
+    "devops",
+    "safety-checker",
+    "audit",
+    "model-context-protocol"
+  ],
+  "author": "AsobaCloud <engineering@asoba.co>",
+  "license": "MIT",
+  "homepage": "https://github.com/AsobaCloud/sdlc-integrity-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AsobaCloud/sdlc-integrity-mcp.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "sdlc-integrity-mcp": "bin/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "node --watch dist/index.js",
+    "test": "node tests/mcp-server.test.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "esprima": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "files": [
+    "dist/",
+    "bin/",
+    "rules/",
+    "scripts/",
+    "README.md",
+    "LICENSE"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "AuditCodeIntegrity",
+  "description": "Run the code integrity auditor (lifecycle teardown parity, mock-theater test detection, naming invariants, swallowed exceptions) against a file or directory. Returns structured JSON findings.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "target": { "type": "string", "description": "File or directory to audit (default: cwd)" },
+      "timeout": { "type": "integer", "description": "Timeout in ms (max 600000)" }
+    }
+  },
+  "phases": {
+    "explore_only": true,
+    "planning_blocked": false,
+    "mandatory_in": ["test"]
+  },
+  "prompt": {
+    "mandatory_instruction": "Run AuditCodeIntegrity on the workspace to check for lifecycle teardown parity, mock-theater tests, naming invariants, and swallowed exceptions.",
+    "available_hint": "Audits code integrity (lifecycle parity, mock-theater tests, naming invariants, error handling)"
+  },
+  "execution": {
+    "runtime": "python3",
+    "script": "scripts/audit-code-integrity.py",
+    "args": [
+      "--target", "{{target}}",
+      "--format", "json"
+    ],
+    "default_timeout": 120000,
+    "max_timeout": 600000
+  }
+}
