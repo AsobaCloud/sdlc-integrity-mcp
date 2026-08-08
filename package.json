@@ -1,6 +1,6 @@
 {
   "name": "@asobacloud/sdlc-integrity-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP Server for enterprise SDLC code integrity: lifecycle teardown parity, mock theater detection, DRY violations, and safety checks for shell, JS, and Python.",
   "keywords": [
     "mcp",

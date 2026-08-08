@@ -18,7 +18,7 @@ const tools = loadToolConfigs(workspaceRoot)
 // ─── MCP Server ──────────────────────────────────────────────
 
 const server = new Server(
-  { name: 'sdlc-integrity-mcp', version: '1.0.0' },
+  { name: 'sdlc-integrity-mcp', version: '1.0.2' },
   { capabilities: { tools: {} } }
 )
 
