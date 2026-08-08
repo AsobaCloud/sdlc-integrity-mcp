@@ -1,4 +1,4 @@
-# @asobacloud/sdlc-integrity-mcp
+# <img src="https://raw.githubusercontent.com/AsobaCloud/sdlc-integrity-mcp/master/docs/asoba-logo.svg" alt="Asoba" width="36" height="36" align="bottom" /> SDLC Code Integrity
 
 MCP server for enterprise SDLC code integrity. AI coding agents call its tools over the [Model Context Protocol](https://modelcontextprotocol.io/) to scan a workspace for lifecycle teardown gaps, mock-theater tests, DRY violations, and language-specific safety issues in shell, JavaScript/HTML, and Python.
 
